@@ -1,205 +1,168 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package com.aes.controller;
 
-import com.aes.dao.UserDao;
-import com.aes.model.UserBean;
-import java.io.IOException;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
+import com.aes.model.UserDetails;
+import com.aes.service.EmpireService;
+import com.aes.service.UService;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  *
- * Author:          Mark
- * Date created:    May 16, 2015
- * Time created:    9:49:03 AM
+ * @author RCBG
  */
-public class UserController extends HttpServlet {
-	
-		private static final String index = "/pages/index.jsp";
-    /**
-     * MY COURSES
-     */
-    private static final String courseOutline = "/pages/course_outline.jsp";
-    private static final String examsByCourse = "/pages/course_exams.jsp";
-    private static final String pastCourses = "/pages/past_courses.jsp";
-    private static final String course = "/pages/course.jsp";
-    /**
-     * MY EXAMS
-     */
-    private static final String upcomingExams = "/pages/user/exam/upcoming_exams.jsp";
-    private static final String pastExams = "/pages/user/exam/past_exams.jsp";
-    private static final String exam = "/pages/exam.jsp";
-    /**
-     * MY PROFILE
-     */
-    private static final String viewProfile = "/pages/user/profile/view_profile.jsp";
-    private static final String editProfile = "/pages/user/profile/edit_profile.jsp";
-    private static final String changePassword = "/pages/user/profile/change_password.jsp";
-		
-    private final int userId = 20151234; 
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        HttpSession session = request.getSession();
-        UserBean user = new UserBean();
-				user.setIntUserId(userId);
-				
-        String forward = index;
-				String action = "";
-        //int accountID = (int)session.getAttribute("accountID");
-				if(request.getParameter("page") != null){
-					action = request.getParameter("page");
-				}
-
-				System.out.println("doGet");
-				
-        /**
-         * MY COURSES
-         */
-        if (action.equals("courseOutline")) {
-            //get course outline by courseID
-            request.setAttribute("course_outline", courseOutline);
-            forward = courseOutline;
-        }// else if (action.equals("examsByCourse")) {
-//            //get exams by courseID
-//            request.setAttribute("exams", exams);
-//            forward = examsByCourse;
-//        } else if (action.equals("pastCourses")) {
-//            //get past courses by accountID
-//            request.setAttribute("courses", courses);
-//            forward = pastCourses;
-//        } else if (action.equals("viewCourse")) {
-//            int courseID = Integer.parseInt(request.getParameter("courseID"));
-//            CourseBean course = SystemDao.getCourseByID(courseID);
-//            request.setAttribute("course", course);
-//            forward = course;
-//        } /**
-//         * MY EXAMS
-//         */
-//        else if (action.equals("upcomingExams") || action.equals("pastExams")) {
-//            //get exams by accountID
-//            request.setAttribute("exams", exams);
-//            if (action.equals("upcomingExams")) {
-//                forward = upcomingExams;
-//            } else if (action.equals(pastExams)
-//    		 {
-//                forward = pastExams;
-//            }
-//        } else if (action.equals("takeExam") || action.equals("viewExam")) {
-//            int examID = Integer.parseInt(request.getParameter("examID"));
-//            ExamBean exam = SystemDao.getExamByID(examID);
-//            request.setAttribute("exam", exam);
-//            forward = exam;
-//        } /**
-//         * MY PROFILE
-//         */
-        else if (action.equals("viewProfile") || action.equals("editProfile")
-                || action.equals("changePassword")) {
-            UserBean account = UserDao.getUserById(userId);
-            request.setAttribute("account", account);
-            if (action.equals("viewProfile")) {
-                forward = viewProfile;
-            } else if (action.equals("editProfile")) {
-                forward = editProfile;
-            } else if (action.equals("changePassword")) {
-                forward = changePassword;
-            }
-        } //else if (action.equals("submitEditProfile")) {
-//            //update profile by accountID
-//            forward = editProfile;
-//        } else if (action.equals("submitChangePassword")) {
-//            //update password by accountID
-//            forward = changePassword;
-//        }
-//
-        RequestDispatcher rd = request.getRequestDispatcher(forward);
-        rd.forward(request, response);
+@Controller
+@RequestMapping("/user")
+public class UserController {
+    
+    @Autowired
+    private UService service;
+    
+    @Autowired
+    private EmpireService e_service;
+    
+    @RequestMapping(value="/home")
+    public String setupForm(Map<String, Object> map, HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        map.put("userName",user.getUserName());
+        //map.put("userCourses", user.getCourses());
+        return "../../user/home";
     }
-
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        HttpSession session = request.getSession();
-        UserBean user = new UserBean();
-                user.setIntUserId(userId);
+    
+    @RequestMapping(value="/view_profile", method=RequestMethod.GET)
+     public String setupForm2 (Map<String, Object> map, HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        map.put("firstName",user.getFirstName());
+        map.put("middleName",user.getMiddleName());
+        map.put("lastName",user.getLastName());
+        map.put("userName",user.getUserName());
+        map.put("userBU", e_service.getUnitNameById(user.getBusinessUnit().getBusinessUnitId()));
+        map.put("position",user.getPosition());
+        map.put("email",user.getEmail());
+        return "../../user/profile/view_profile";
+    }
+   
+    @RequestMapping(value="/edit_profile", method=RequestMethod.GET)
+    public String setupForm3 (@ModelAttribute UserDetails loggedUser, Map<String, Object> map,
+            HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        //map.put("tempUser",user);
+        map.put("firstName",user.getFirstName());
+        map.put("middleName",user.getMiddleName());
+        map.put("lastName",user.getLastName());
+        map.put("userName",user.getUserName());
+        map.put("businessUnit", e_service.getAllBusinessUnit());
+        map.put("userBU", e_service.getUnitNameById(user.getBusinessUnit().getBusinessUnitId()));
+        map.put("businessUnits", e_service.getAllBusinessUnit());
+        map.put("position",user.getPosition());
+        map.put("email",user.getEmail());
+        //map.put("userType",service.getTypeNameById(user.getUserType().getUserTypeId()));
+        return "../../user/profile/edit_profile";
+    }
+    
+    @RequestMapping(value="/change_password", method=RequestMethod.GET)
+    public String setupForm4 (@ModelAttribute UserDetails loggedUser, Map<String, Object> map,
+            HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        map.put("userName",user.getUserName());
+        map.put("old_pw", user.getPassword());
+        return "../../user/profile/change_password";
+    }
+    
+    @RequestMapping(value="/useractions", method=RequestMethod.POST)
+    public String doActions(Map<String, Object> map,
+            HttpServletRequest request, @RequestParam String email, @RequestParam String buChosen, 
+            @RequestParam String firstname, @RequestParam String middlename, 
+            @RequestParam String lastname, @RequestParam String position,
+            @RequestParam String action, @RequestParam String old_pw, 
+            @RequestParam String new_pw, @RequestParam String confirm_pw){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        switch(action.toLowerCase()){
+            case "edit":
+                user.setFirstName(firstname);
+                user.setMiddleName(middlename);
+                user.setLastName(lastname);
+                user.setEmail(email);
+                user.setBusinessUnit(e_service.getBusinessUnit(Integer.parseInt(buChosen)));
+                user.setPosition(position);
+                service.updateProfile(user);
+                break;
+            case "change_password":
                 
-        String forward = "";
-        //int accountID = (int)session.getAttribute("accountID");
-        String action = request.getParameter("page");
-
-				System.out.println("doPost");
-				
-        /**
-         * MY COURSES
-         */
-        if (action.equals("courseOutline")) {
-            //get course outline by courseID
-            request.setAttribute("course_outline", courseOutline);
-            forward = courseOutline;
-        }// else if (action.equals("examsByCourse")) {
-//            //get exams by courseID
-//            request.setAttribute("exams", exams);
-//            forward = examsByCourse;
-//        } else if (action.equals("pastCourses")) {
-//            //get past courses by accountID
-//            request.setAttribute("courses", courses);
-//            forward = pastCourses;
-//        } else if (action.equals("viewCourse")) {
-//            int courseID = Integer.parseInt(request.getParameter("courseID"));
-//            CourseBean course = SystemDao.getCourseByID(courseID);
-//            request.setAttribute("course", course);
-//            forward = course;
-//        } /**
-//         * MY EXAMS
-//         */
-       else if (action.equals("upcomingExams") || action.equals("pastExams")) {
-           //get exams by accountID
-           /*request.setAttribute("exams", exams);*/
-           if (action.equals("upcomingExams")) {
-               forward = upcomingExams;
-           } else if (action.equals(pastExams))
-          {
-               forward = pastExams;
-           }
-       } else if (action.equals("takeExam") || action.equals("viewExam")) {
-           /*int examID = Integer.parseInt(request.getParameter("examID"));
-           ExamBean exam = SystemDao.getExamByID(examID);
-           request.setAttribute("exam", exam);*/
-           forward = exam;
-       } /**
-        * MY PROFILE
-        */
-        else if (action.equals("viewProfile") || action.equals("editProfile")
-                || action.equals("changePassword")) {
-            UserBean account = UserDao.getUserById(20151234);
-            request.setAttribute("account", account);
-            if (action.equals("viewProfile")) {
-                System.out.println("View Profile Accessed");
-                forward = viewProfile;
-            } else if (action.equals("editProfile")) {
-                forward = editProfile;
-            } else if (action.equals("changePassword")) {
-                forward = changePassword;
-            }
-        } //else if (action.equals("submitEditProfile")) {
-//            //update profile by accountID
-//            forward = editProfile;
-//        } else if (action.equals("submitChangePassword")) {
-//            //update password by accountID
-//            forward = changePassword;
-//        }
-//
-        RequestDispatcher rd = request.getRequestDispatcher(forward);
-        rd.forward(request, response);
+                String password=user.getPassword();
+                if(password.equals(old_pw)&&new_pw.equals(confirm_pw)){
+                    user.setPassword(new_pw);
+                    service.updateProfile(user);
+                }else{
+                    map.put("userName",user.getUserName());
+                    return "../../user/profile/change_password";
+                }
+                break;
+        }
+        map.put("userName",user.getUserName());
+        return "../../user/home";
+    }
+    
+    @RequestMapping(value="/past_exams", method=RequestMethod.GET)
+    public String setupForm5(@ModelAttribute UserDetails loggedUser, Map<String, Object> map,
+            HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        map.put("userName",user.getUserName());
+        return "../../user/exam/past_exams";
+    }
+    
+    @RequestMapping(value="/upcoming_exams", method=RequestMethod.GET)
+    public String setupForm6(@ModelAttribute UserDetails loggedUser, Map<String, Object> map,
+            HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        map.put("userName",user.getUserName());
+        return "../../user/exam/upcoming_exams";
+    }
+    
+    @RequestMapping(value="/past_courses", method=RequestMethod.GET)
+    public String setupForm7(@ModelAttribute UserDetails loggedUser, Map<String, Object> map,
+            HttpServletRequest request){
+        HttpSession session=request.getSession();
+        int userID=(int)session.getAttribute("userID");
+        UserDetails usr = new UserDetails();
+        usr.setUserId(userID);
+        UserDetails user=service.getUserDetails(usr);
+        map.put("userName",user.getUserName());
+        return "../../user/past_courses";
     }
 }
